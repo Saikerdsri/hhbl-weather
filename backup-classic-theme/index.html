@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HHBL Sky Lane Weather</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚴</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style-lux.css?v=2" id="lux-css">
+<script>
+// Apply saved theme before first paint to avoid a flash. Default: lux.
+(function () {
+  var theme = 'lux';
+  try { theme = localStorage.getItem('hhbl-theme') || 'lux'; } catch (e) {}
+  window.APP_THEME = theme;
+  document.getElementById('lux-css').disabled = (theme !== 'lux');
+})();
+</script>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="header-title">
+      <span class="bike-icon">🚴</span>
+      <div>
+        <h1>HHBL Sky Lane</h1>
+        <p class="subtitle">Happy &amp; Healthy Bike Lane · Suvarnabhumi, Bangkok</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <span id="last-updated">Loading…</span>
+      <button id="theme-btn" title="Switch design theme">✦</button>
+      <button id="refresh-btn" title="Refresh forecast">⟳</button>
+    </div>
+  </header>
+
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Fetching forecast for the bike lane…</p>
+  </div>
+
+  <div id="error" class="error hidden">
+    <p>Could not load the forecast. Check your connection and try again.</p>
+    <button onclick="loadWeather()">Retry</button>
+  </div>
+
+  <main id="content" class="hidden">
+
+    <!-- Ride verdict banner -->
+    <section id="verdict" class="verdict">
+      <div class="verdict-emoji" id="verdict-emoji"></div>
+      <div class="verdict-text">
+        <h2 id="verdict-title"></h2>
+        <p id="verdict-detail"></p>
+      </div>
+      <div class="verdict-score">
+        <div class="score-ring" id="score-ring">
+          <span id="score-value"></span>
+        </div>
+        <span class="score-label">ride score</span>
+      </div>
+    </section>
+
+    <!-- Current conditions -->
+    <section class="card current">
+      <h3 class="card-title">Right now at the track</h3>
+      <div class="current-grid">
+        <div class="current-main">
+          <span class="current-icon" id="current-icon"></span>
+          <div>
+            <div class="current-temp" id="current-temp"></div>
+            <div class="current-desc" id="current-desc"></div>
+            <div class="current-feels" id="current-feels"></div>
+          </div>
+        </div>
+        <div class="current-stats">
+          <div class="stat"><span class="stat-icon">💧</span><div><span class="stat-value" id="stat-humidity"></span><span class="stat-name">Humidity</span></div></div>
+          <div class="stat"><span class="stat-icon">💨</span><div><span class="stat-value" id="stat-wind"></span><span class="stat-name">Wind</span></div></div>
+          <div class="stat"><span class="stat-icon">🌧️</span><div><span class="stat-value" id="stat-rain"></span><span class="stat-name">Rain now</span></div></div>
+          <div class="stat"><span class="stat-icon">☀️</span><div><span class="stat-value" id="stat-uv"></span><span class="stat-name">UV index</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Best ride windows today/tomorrow -->
+    <section class="card">
+      <h3 class="card-title">Best ride windows <span class="card-note">(track hours 06:00 – 21:00)</span></h3>
+      <div id="ride-windows" class="ride-windows"></div>
+    </section>
+
+    <!-- Live map: lane, rain radar, wind -->
+    <section class="card map-card">
+      <h3 class="card-title">Live map — rain radar &amp; wind <span class="card-note">(HHBL loops highlighted)</span></h3>
+      <div class="map-wrap">
+        <div id="map"></div>
+        <canvas id="wind-canvas"></canvas>
+        <div class="wind-compass" id="wind-compass" title="Wind direction (arrow shows where the wind is blowing TO)">
+          <svg viewBox="0 0 60 60" id="compass-svg">
+            <circle cx="30" cy="30" r="27" class="compass-face"/>
+            <text x="30" y="10" class="compass-n">N</text>
+            <g id="compass-arrow" transform="rotate(0 30 30)">
+              <path d="M30 12 L36 36 L30 30 L24 36 Z" class="compass-pointer"/>
+            </g>
+          </svg>
+          <div class="wind-readout">
+            <span id="wind-speed-label">–</span>
+            <span id="wind-dir-label">–</span>
+          </div>
+        </div>
+        <div class="radar-bar">
+          <button id="radar-play" class="radar-btn" title="Play / pause radar animation">⏸</button>
+          <input type="range" id="radar-slider" min="0" max="0" value="0" step="1">
+          <span id="radar-time" class="radar-time">radar…</span>
+        </div>
+      </div>
+      <div class="map-legend">
+        <span><i class="line line-blue"></i>Sky Lane 23.5 km</span>
+        <span><i class="line line-purple"></i>Purple loop</span>
+        <span><i class="line line-kids"></i>Kids track</span>
+        <span><i class="line line-bridge"></i>Sky Bridge</span>
+        <span><i class="line line-rain"></i>Rain cells (radar)</span>
+      </div>
+      <p class="map-note" id="radar-note">Rain clouds animate over the last hour of radar (forecast frames are added when available) — watch which way the cells drift to see what's coming. Wind streaks show the direction the wind is blowing toward.</p>
+    </section>
+
+    <!-- Hourly forecast -->
+    <section class="card">
+      <h3 class="card-title">Next 24 hours</h3>
+      <div class="hourly-scroll" id="hourly"></div>
+      <div class="legend">
+        <span><i class="dot dot-great"></i>Great</span>
+        <span><i class="dot dot-good"></i>Good</span>
+        <span><i class="dot dot-fair"></i>Fair</span>
+        <span><i class="dot dot-poor"></i>Poor</span>
+      </div>
+    </section>
+
+    <!-- 7 day forecast -->
+    <section class="card">
+      <h3 class="card-title">7-day outlook</h3>
+      <div id="daily" class="daily"></div>
+    </section>
+
+    <footer class="footer">
+      <p>Forecast data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · Location: Sky Lane, Suvarnabhumi Airport (13.69°N, 100.75°E)</p>
+      <p>Ride score weighs rain chance, rainfall, heat, wind, UV and track opening hours. Always check the sky before you roll out. 🚲</p>
+      <div class="credit">
+        <p class="credit-line">© <span id="credit-year">2026</span> <strong>Thamarat Saikerdsri</strong> · All rights reserved.</p>
+        <p class="credit-terms">Free for everyone to use and share. Please keep this credit — do not claim this work as your own or sell it.</p>
+        <a id="donate-btn" class="donate-btn hidden" href="#" target="_blank" rel="noopener">☕ Support this project</a>
+      </div>
+    </footer>
+  </main>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="lane-data.js?v=2"></script>
+<script src="map.js?v=3"></script>
+<script src="app.js?v=4"></script>
+</body>
+</html>

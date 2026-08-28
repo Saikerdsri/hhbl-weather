@@ -1,0 +1,256 @@
+/* HHBL Sky Lane — "Lux" theme tryout.
+   Quiet luxury: deep charcoal, champagne gold, glass cards, serif display. */
+
+:root {
+  --bg: #0b0e13;
+  --card: rgba(22, 27, 36, 0.72);
+  --text: #ece7dc;
+  --text-soft: #9d9585;
+  --border: rgba(201, 169, 98, 0.22);
+  --accent: #c9a962;
+  --great: #3fae72;
+  --good: #8fb04d;
+  --fair: #d9a13b;
+  --poor: #c05a5a;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  --radius: 18px;
+  --gold: #c9a962;
+  --gold-bright: #e8cd8f;
+}
+
+body {
+  background:
+    radial-gradient(1100px 500px at 80% -10%, rgba(201, 169, 98, 0.10), transparent 60%),
+    radial-gradient(900px 600px at -10% 30%, rgba(46, 74, 117, 0.18), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+}
+
+.app { max-width: 900px; padding: 28px 20px 56px; position: relative; }
+
+/* ---- Ambient moving light (behind the glass cards) ---- */
+.bg-fx {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.app { z-index: 1; }
+.glow {
+  position: absolute;
+  width: 55vmax;
+  height: 55vmax;
+  border-radius: 50%;
+  will-change: transform;
+}
+.glow-gold {
+  top: -20vmax; right: -12vmax;
+  background: radial-gradient(circle, rgba(201, 169, 98, 0.16), transparent 62%);
+  animation: drift-a 46s ease-in-out infinite alternate;
+}
+.glow-navy {
+  bottom: -22vmax; left: -16vmax;
+  background: radial-gradient(circle, rgba(52, 86, 138, 0.20), transparent 62%);
+  animation: drift-b 58s ease-in-out infinite alternate;
+}
+.glow-ember {
+  top: 30%; left: 55%;
+  width: 36vmax; height: 36vmax;
+  background: radial-gradient(circle, rgba(176, 118, 60, 0.10), transparent 60%);
+  animation: drift-c 38s ease-in-out infinite alternate;
+}
+@keyframes drift-a {
+  from { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-14vmax, 10vmax) scale(1.12); }
+  to   { transform: translate(-6vmax, 22vmax) scale(0.95); }
+}
+@keyframes drift-b {
+  from { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(12vmax, -12vmax) scale(1.08); }
+  to   { transform: translate(20vmax, -4vmax) scale(1.15); }
+}
+@keyframes drift-c {
+  from { transform: translate(0, 0); }
+  50%  { transform: translate(-18vmax, -8vmax); }
+  to   { transform: translate(-8vmax, 10vmax); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glow { animation: none; }
+}
+
+/* ---- Typography ---- */
+h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 1.7rem;
+  letter-spacing: 0.01em;
+  background: linear-gradient(100deg, var(--gold-bright), var(--gold) 60%, #a8894c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.subtitle {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+.card-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.12rem;
+  letter-spacing: 0.01em;
+}
+.card-title::after {
+  content: '';
+  display: block;
+  width: 44px;
+  height: 2px;
+  margin-top: 8px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  border-radius: 2px;
+}
+.card-note {
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+}
+
+/* ---- Header ---- */
+.header { margin-bottom: 26px; }
+.bike-icon {
+  filter: drop-shadow(0 0 14px rgba(201, 169, 98, 0.45));
+}
+#refresh-btn {
+  background: rgba(201, 169, 98, 0.08);
+  border: 1px solid var(--border);
+  color: var(--gold-bright);
+  backdrop-filter: blur(8px);
+}
+
+/* ---- Cards: glass ---- */
+.card {
+  background: var(--card);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border);
+  padding: 26px;
+  margin-bottom: 20px;
+  transition: border-color 0.35s ease, transform 0.35s ease;
+}
+.card:hover { border-color: rgba(201, 169, 98, 0.45); }
+
+/* ---- Verdict banner ---- */
+.verdict {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 28px 30px;
+  position: relative;
+  overflow: hidden;
+}
+.verdict::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, rgba(255,255,255,0.10), transparent 40%);
+  pointer-events: none;
+}
+.verdict.v-great { background: linear-gradient(120deg, #123f28, #1d5c3b 60%, #23684a); }
+.verdict.v-good  { background: linear-gradient(120deg, #2e3d14, #465c1e 60%, #52691f); }
+.verdict.v-fair  { background: linear-gradient(120deg, #4a3510, #6e4f16 60%, #7d5a17); }
+.verdict.v-poor  { background: linear-gradient(120deg, #431d1d, #5e2727 60%, #6b2e2e); }
+.verdict.v-closed{ background: linear-gradient(120deg, #1a2230, #263447 60%, #2d3d52); }
+.verdict-text h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 1.55rem;
+}
+.score-ring {
+  width: 80px; height: 80px;
+  font-size: 1.6rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 2px solid var(--gold-bright);
+  box-shadow: 0 0 22px rgba(201, 169, 98, 0.35), inset 0 0 12px rgba(201, 169, 98, 0.15);
+  color: var(--gold-bright);
+}
+.score-label { color: rgba(255, 255, 255, 0.85); letter-spacing: 0.18em; }
+
+/* ---- Current conditions ---- */
+.current-temp {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 3rem;
+  font-weight: 700;
+}
+.stat-value { color: var(--gold-bright); }
+.stat-name { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.62rem; }
+
+/* ---- Ride windows ---- */
+.window-row {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--gold);
+  padding: 14px 18px;
+  transition: background 0.3s ease;
+}
+.window-row:hover { background: rgba(201, 169, 98, 0.06); }
+.window-badge { letter-spacing: 0.1em; }
+
+/* ---- Hourly ---- */
+.hour-cell {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-top-width: 3px;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+.hour-cell:hover { transform: translateY(-3px); background: rgba(201, 169, 98, 0.07); }
+.hour-rain { color: #7fb3d9; }
+
+/* ---- Daily ---- */
+.day-row { border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.day-rain { color: #7fb3d9; }
+.day-temps { color: var(--gold-bright); }
+
+/* ---- Map ---- */
+.map-wrap { border: 1px solid var(--border); }
+.wind-compass, .radar-bar {
+  background: rgba(15, 19, 26, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+}
+.compass-pointer { fill: var(--gold); }
+.radar-btn { background: linear-gradient(120deg, var(--gold), #a8894c); color: #14100a; font-weight: 700; }
+#radar-slider { accent-color: var(--gold); }
+.line-blue { background: #4aa8e8; }
+
+/* ---- Footer / credit ---- */
+.credit { border-top: 1px solid var(--border); }
+.credit-line strong {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.95rem;
+  color: var(--gold-bright);
+  letter-spacing: 0.02em;
+}
+.donate-btn {
+  background: linear-gradient(120deg, var(--gold-bright), var(--gold) 55%, #a8894c);
+  color: #14100a !important;
+  box-shadow: 0 4px 18px rgba(201, 169, 98, 0.3);
+}
+
+/* ---- Loading ---- */
+.spinner { border-color: rgba(201, 169, 98, 0.2); border-top-color: var(--gold); }
+
+/* Gentle entrance */
+@media (prefers-reduced-motion: no-preference) {
+  #content > section { animation: rise 0.6s ease both; }
+  #content > section:nth-child(2) { animation-delay: 0.06s; }
+  #content > section:nth-child(3) { animation-delay: 0.12s; }
+  #content > section:nth-child(4) { animation-delay: 0.18s; }
+  #content > section:nth-child(5) { animation-delay: 0.24s; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+}
