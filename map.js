@@ -86,7 +86,10 @@ async function initRadar() {
       layer: L.tileLayer(`${host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`, {
         opacity: 0,
         zIndex: 400,
-        maxZoom: 18,
+        maxZoom: 19,
+        // RainViewer has no tiles beyond ~z10 ("Zoom Level Not Supported"
+        // watermark) — upscale z10 tiles when the map zooms in closer.
+        maxNativeZoom: 10,
       }).addTo(map),
     }));
 
