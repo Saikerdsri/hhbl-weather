@@ -267,6 +267,11 @@ h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
 .line-rain { background: linear-gradient(90deg, #7fd4f5, #2a6fd6); }
 .map-note { margin-top: 8px; font-size: 0.75rem; color: var(--text-soft); }
 .leaflet-container { font-family: inherit; }
+/* Dark basemap: invert OSM tiles to a deep charcoal that matches the theme.
+   Applied only to the basemap pane — radar colors stay true. */
+.basemap-dark img.leaflet-tile {
+  filter: invert(1) hue-rotate(180deg) brightness(0.62) contrast(0.92) saturate(0.32);
+}
 
 @media (max-width: 560px) {
   #map { height: 340px; }

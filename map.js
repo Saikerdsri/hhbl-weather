@@ -32,19 +32,18 @@ function isDarkTheme() {
 function initMap() {
   if (map) return;
   const dark = isDarkTheme();
-  map = L.map('map', { center: MAP_CENTER, zoom: 12, scrollWheelZoom: false, maxZoom: 16 });
+  map = L.map('map', { center: MAP_CENTER, zoom: 12, scrollWheelZoom: false, maxZoom: 18 });
 
-  // Keyless basemaps: Esri Canvas (free with attribution, no API key needed)
-  const canvas = dark ? 'Dark_Gray' : 'Light_Gray';
-  const attribution = 'Tiles &copy; <a href="https://www.esri.com/">Esri</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors · radar <a href="https://www.rainviewer.com/">RainViewer</a>';
-  L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${canvas}_Base/MapServer/tile/{z}/{y}/{x}`, {
-    attribution,
-    maxZoom: 16,
-  }).addTo(map);
-  // Place labels above the base canvas
-  L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${canvas}_Reference/MapServer/tile/{z}/{y}/{x}`, {
-    maxZoom: 16,
-    pane: 'shadowPane',
+  // Keyless basemap: OpenStreetMap in its own pane, darkened via CSS filter so
+  // the radar overlay keeps its true colors. Full zoom detail, no API key.
+  map.createPane('basemap');
+  const basePane = map.getPane('basemap');
+  basePane.style.zIndex = 150; // below tilePane (200) where the radar lives
+  if (dark) basePane.classList.add('basemap-dark');
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · radar <a href="https://www.rainviewer.com/">RainViewer</a>',
+    maxZoom: 19,
+    pane: 'basemap',
   }).addTo(map);
 
   // Lane geometry (generated from OSM into lane-data.js)
