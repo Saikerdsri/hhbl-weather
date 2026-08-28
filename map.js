@@ -32,11 +32,19 @@ function isDarkTheme() {
 function initMap() {
   if (map) return;
   const dark = isDarkTheme();
-  map = L.map('map', { center: MAP_CENTER, zoom: 12, scrollWheelZoom: false });
+  map = L.map('map', { center: MAP_CENTER, zoom: 12, scrollWheelZoom: false, maxZoom: 16 });
 
-  L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`, {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a> · radar <a href="https://www.rainviewer.com/">RainViewer</a>',
-    maxZoom: 18,
+  // Keyless basemaps: Esri Canvas (free with attribution, no API key needed)
+  const canvas = dark ? 'Dark_Gray' : 'Light_Gray';
+  const attribution = 'Tiles &copy; <a href="https://www.esri.com/">Esri</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors · radar <a href="https://www.rainviewer.com/">RainViewer</a>';
+  L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${canvas}_Base/MapServer/tile/{z}/{y}/{x}`, {
+    attribution,
+    maxZoom: 16,
+  }).addTo(map);
+  // Place labels above the base canvas
+  L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${canvas}_Reference/MapServer/tile/{z}/{y}/{x}`, {
+    maxZoom: 16,
+    pane: 'shadowPane',
   }).addTo(map);
 
   // Lane geometry (generated from OSM into lane-data.js)
