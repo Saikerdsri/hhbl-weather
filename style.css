@@ -192,8 +192,10 @@ h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
   z-index: 1;
 }
 #wind-canvas {
+  /* Sized by JS to cover exactly the #map area (not the docked controls) */
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   z-index: 500;
   pointer-events: none;
 }
@@ -279,9 +281,14 @@ h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
 }
 
 @media (max-width: 560px) {
-  #map { height: 340px; }
-  .radar-bar { right: 10px; bottom: 104px; }
-  .wind-compass { top: auto; bottom: 10px; right: 10px; }
+  #map { height: 360px; }
+  /* Dock the radar controls below the map instead of floating on it */
+  .radar-bar { position: static; margin: 8px; }
+  /* Smaller compass, top-right (clear of the zoom buttons top-left) */
+  .wind-compass { top: 8px; right: 8px; width: 70px; padding: 6px; }
+  #compass-svg { width: 42px; height: 42px; }
+  .wind-readout span:first-child { font-size: 0.76rem; }
+  .wind-readout span:last-child { font-size: 0.6rem; }
 }
 
 /* Hourly */

@@ -87,9 +87,9 @@ async function initRadar() {
         opacity: 0,
         zIndex: 400,
         maxZoom: 19,
-        // RainViewer has no tiles beyond ~z10 ("Zoom Level Not Supported"
-        // watermark) — upscale z10 tiles when the map zooms in closer.
-        maxNativeZoom: 10,
+        // RainViewer's free tiles stop at z7 (beyond that they return a
+        // "Zoom Level Not Supported" watermark) — upscale z7 tiles instead.
+        maxNativeZoom: 7,
       }).addTo(map),
     }));
 
@@ -157,16 +157,18 @@ const PARTICLE_COUNT = 110;
 
 function initWindCanvas() {
   const canvas = document.getElementById('wind-canvas');
-  const wrap = canvas.parentElement;
+  const mapDiv = document.getElementById('map');
   const ctx = canvas.getContext('2d');
 
   function resize() {
-    canvas.width = wrap.clientWidth * devicePixelRatio;
-    canvas.height = wrap.clientHeight * devicePixelRatio;
+    canvas.style.width = mapDiv.clientWidth + 'px';
+    canvas.style.height = mapDiv.clientHeight + 'px';
+    canvas.width = mapDiv.clientWidth * devicePixelRatio;
+    canvas.height = mapDiv.clientHeight * devicePixelRatio;
     ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-    spawnParticles(wrap.clientWidth, wrap.clientHeight);
+    spawnParticles(mapDiv.clientWidth, mapDiv.clientHeight);
   }
-  new ResizeObserver(resize).observe(wrap);
+  new ResizeObserver(resize).observe(mapDiv);
   resize();
 
   const lux = window.APP_THEME === 'lux';
@@ -176,7 +178,7 @@ function initWindCanvas() {
   const haloColor = dark ? 'rgba(0, 20, 40, 0.5)' : 'rgba(255, 255, 255, 0.7)';
 
   function step() {
-    const w = wrap.clientWidth, h = wrap.clientHeight;
+    const w = mapDiv.clientWidth, h = mapDiv.clientHeight;
     ctx.clearRect(0, 0, w, h);
 
     if (wind.speed > 0.5) {
