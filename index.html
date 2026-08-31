@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 <link rel="stylesheet" href="style-lux.css?v=5">
 <script>window.APP_THEME = 'lux';</script>
 </head>
@@ -127,6 +127,21 @@
         <span><i class="line line-rain"></i>Rain cells (radar)</span>
       </div>
       <p class="map-note" id="radar-note">Rain clouds animate over the last hour of radar (forecast frames are added when available) — watch which way the cells drift to see what's coming. Wind streaks show the direction the wind is blowing toward.</p>
+    </section>
+
+    <!-- Live camera (official HHBL feed) -->
+    <section class="card">
+      <h3 class="card-title">Live camera — Bike Center <span class="card-note">(official HHBL feed)</span></h3>
+      <div class="cam-wrap">
+        <iframe
+          src="https://html.login.in.th/flashstreaming/flash_url/vip/hhbl/640/360/1.html"
+          title="HHBL Bike Center live camera"
+          loading="lazy"
+          allow="autoplay; fullscreen"
+          allowfullscreen
+          referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <p class="map-note">Check the real sky before you roll out. Stream by <a href="https://www.hhblbikelane.com/bike-center-cam/" target="_blank" rel="noopener">hhblbikelane.com</a> — more camera angles on their site.</p>
     </section>
 
     <!-- Hourly forecast -->
