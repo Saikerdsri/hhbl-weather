@@ -2,10 +2,8 @@
 // © 2026 Thamarat Saikerdsri. Free to use and share with credit; do not claim as your own.
 // Data: Open-Meteo (free, no API key). All times in Asia/Bangkok.
 
-// Donation link — paste your wallet address URL, Ko-fi, Buy Me a Coffee, or PromptPay
-// page here when you have one, and the "Support this project" button appears.
-// Examples: 'https://ko-fi.com/yourname' or 'https://www.buymeacoffee.com/yourname'
-const DONATION_URL = '';
+// Donations: see donate.js — the Support button appears automatically once
+// donation-qr.png exists in the project root.
 
 const LAT = 13.69;
 const LON = 100.75;
@@ -351,13 +349,8 @@ async function loadWeather() {
   }
 }
 
-// Credit footer: keep the year current, show the donate button once a link is set
+// Credit footer: keep the year current
 document.getElementById('credit-year').textContent = bangkokNow().getFullYear();
-if (DONATION_URL) {
-  const btn = document.getElementById('donate-btn');
-  btn.href = DONATION_URL;
-  btn.classList.remove('hidden');
-}
 
 // PWA: register the service worker (works on https and localhost)
 if ('serviceWorker' in navigator) {

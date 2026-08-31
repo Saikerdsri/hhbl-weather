@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?v=12">
-<link rel="stylesheet" href="style-lux.css?v=5">
+<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style-lux.css?v=6">
 <script>window.APP_THEME = 'lux';</script>
 </head>
 <body>
@@ -168,14 +168,36 @@
       <div class="credit">
         <p class="credit-line">© <span id="credit-year">2026</span> <strong>Thamarat Saikerdsri</strong> · All rights reserved.</p>
         <p class="credit-terms">Free for everyone to use and share. Please keep this credit — do not claim this work as your own or sell it.</p>
-        <a id="donate-btn" class="donate-btn hidden" href="#" target="_blank" rel="noopener">☕ Support this project</a>
+        <button id="donate-btn" class="donate-btn hidden">☕ Support this project</button>
       </div>
     </footer>
   </main>
 </div>
+
+<!-- Donation modal -->
+<div id="donate-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="donate-title">
+  <div class="modal-box">
+    <button class="modal-close" id="donate-close" title="Close">✕</button>
+    <h3 id="donate-title">Support Sky Lane Weather</h3>
+    <p class="modal-sub">If this app ever saved you from a soaking, a coffee is very welcome ☕</p>
+    <img id="donation-qr" src="donation-qr.png" alt="Donation QR code" loading="lazy">
+    <p class="qr-hint">Scan with your banking or wallet app</p>
+    <div class="hatch-zone">
+      <p class="hatch-pitch">Every supporter adopts a <strong>Ride Buddy</strong> — a one-of-a-kind pixel pal born just for you:</p>
+      <button id="hatch-btn">🥚 Hatch my Ride Buddy</button>
+      <div id="buddy-result" class="hidden">
+        <canvas id="buddy-canvas" width="130" height="130"></canvas>
+        <div id="buddy-name"></div>
+        <div id="buddy-flavor"></div>
+        <button id="rehatch-btn" title="Hatch another">↻ hatch another</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="lane-data.js?v=2"></script>
 <script src="map.js?v=7"></script>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
+<script src="donate.js?v=1"></script>
 </body>
 </html>

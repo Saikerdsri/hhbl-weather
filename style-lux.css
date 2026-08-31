@@ -242,6 +242,21 @@ h1 {
 /* ---- Loading ---- */
 .spinner { border-color: rgba(201, 169, 98, 0.2); border-top-color: var(--gold); }
 
+/* ---- Donation modal ---- */
+.modal-box {
+  background: rgba(22, 27, 36, 0.94);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(201, 169, 98, 0.35);
+}
+.modal-box h3 { font-family: 'Playfair Display', Georgia, serif; color: var(--gold-bright); }
+#hatch-btn {
+  background: linear-gradient(120deg, var(--gold-bright), var(--gold) 55%, #a8894c);
+  color: #14100a;
+  box-shadow: 0 4px 18px rgba(201, 169, 98, 0.3);
+}
+#buddy-name { font-family: 'Playfair Display', Georgia, serif; color: var(--gold-bright); }
+#buddy-canvas { border-color: rgba(201, 169, 98, 0.3); }
+
 /* Tighter cards on phones so the map gets the width */
 @media (max-width: 560px) {
   .app { padding: 20px 12px 40px; }
