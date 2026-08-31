@@ -281,6 +281,13 @@ h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
 }
 
 @media (max-width: 560px) {
+  /* Ride windows: day/time/badge on one line, reason text full-width below */
+  .window-row { flex-wrap: wrap; gap: 6px 12px; }
+  .window-row .w-day { min-width: 0; }
+  .window-row .w-time { font-size: 0.9rem; }
+  .window-row .w-why { flex: none; width: 100%; order: 5; }
+  .window-row .window-badge { margin-left: auto; }
+
   #map { height: 360px; }
   /* Dock the radar controls below the map instead of floating on it */
   .radar-bar { position: static; margin: 8px; }
