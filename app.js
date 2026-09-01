@@ -80,6 +80,71 @@ function computeSurfaceWetness(d) {
   return wet;
 }
 
+// ---- Radar cross-check ----
+// Open-Meteo's rain is model output and can miss hyper-local Bangkok showers
+// (verified against the HHBL live camera). RainViewer radar is measured rain,
+// so sample its past frames directly over the track and, when radar saw rain
+// the model missed, force the surface wetness up accordingly.
+const RADAR_TILE = { z: 7, x: 99, y: 59, px: 210, py: 26 }; // track position in tile
+
+function sampleRadarFrame(host, frame) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const t = setTimeout(() => resolve(false), 8000);
+    img.onload = () => {
+      clearTimeout(t);
+      try {
+        const c = document.createElement('canvas');
+        c.width = c.height = 256;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        // ~±3.5 km box around the track (z7: 1 px ≈ 1.2 km)
+        const px = ctx.getImageData(RADAR_TILE.px - 3, RADAR_TILE.py - 3, 6, 6).data;
+        for (let i = 3; i < px.length; i += 4) {
+          if (px[i] > 60) return resolve(true); // any radar echo over the track
+        }
+        resolve(false);
+      } catch (e) { resolve(false); }
+    };
+    img.onerror = () => { clearTimeout(t); resolve(false); };
+    img.src = `${host}${frame.path}/256/${RADAR_TILE.z}/${RADAR_TILE.x}/${RADAR_TILE.y}/2/1_1.png`;
+  });
+}
+
+async function radarRecentRain() {
+  try {
+    const meta = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
+    const frames = meta.radar?.past || [];
+    if (!frames.length) return null;
+    const hits = await Promise.all(frames.map((f) => sampleRadarFrame(meta.host, f)));
+    const rainyFrames = hits.filter(Boolean).length;
+    const lastIdx = hits.lastIndexOf(true);
+    return {
+      rainyFrames,
+      lastRainAgoMin: lastIdx >= 0 ? Math.max(0, Math.round((meta.generated - frames[lastIdx].time) / 60)) : null,
+    };
+  } catch (e) {
+    console.warn('Radar cross-check unavailable:', e);
+    return null;
+  }
+}
+
+function applyRadarCorrection(d, nowIdx, radar) {
+  d._radarRain = radar && radar.rainyFrames ? radar : null;
+  if (!d._radarRain) return;
+  // Water the radar saw (~0.6 mm per rainy 10-min frame), already partly dried
+  // depending on how long ago the last echo was
+  const recency = Math.max(0.3, 1 - (radar.lastRainAgoMin || 0) / 180);
+  let add = Math.min(3.5, 0.6 * radar.rainyFrames) * recency;
+  const et0 = d.hourly.et0_fao_evapotranspiration;
+  const wind = d.hourly.wind_speed_10m;
+  for (let i = nowIdx; i < d._wetness.length && add > 0.05; i++) {
+    d._wetness[i] = Math.max(d._wetness[i], add);
+    add -= 0.3 + 4.0 * (et0[i] || 0) + (wind[i] || 0) * 0.012;
+  }
+}
+
 const SURFACE_LEVELS = [
   { max: 0.1, label: 'Dry', icon: '🛣️', penalty: 0 },
   { max: 0.8, label: 'Damp', icon: '🛣️', penalty: 8 },
@@ -245,6 +310,9 @@ function renderSurface(d, nowIdx) {
       ? `Slippery — rideable ~${fmtHour(d.hourly.time[ridableIdx])}`
       : 'Slippery — wet for a while';
   }
+  if (d._radarRain && wet > 0.1) {
+    detail.textContent += ` · radar saw rain ${d._radarRain.lastRainAgoMin} min ago`;
+  }
 }
 
 function renderVerdict(d, nowIdx) {
@@ -398,7 +466,7 @@ async function loadWeather() {
   error.classList.add('hidden');
 
   try {
-    const res = await fetch(API_URL);
+    const [res, radar] = await Promise.all([fetch(API_URL), radarRecentRain()]);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
@@ -409,6 +477,7 @@ async function loadWeather() {
     if (nowIdx < 0) nowIdx = 24; // with past_days=1, "now" sits ~24h into the arrays
 
     data._wetness = computeSurfaceWetness(data);
+    applyRadarCorrection(data, nowIdx, radar);
 
     renderCurrent(data);
     renderSurface(data, nowIdx);
