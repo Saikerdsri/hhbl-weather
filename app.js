@@ -87,11 +87,14 @@ function computeSurfaceWetness(d) {
 // the model missed, force the surface wetness up accordingly.
 const RADAR_TILE = { z: 7, x: 99, y: 59, px: 210, py: 26 }; // track position in tile
 
+// Returns 0 = no echo, 1 = light echo (pale drizzle colors), 2 = heavy echo
+// (dark/saturated colors). Calibrated against the HHBL live camera (2026-09-01):
+// light drizzle echoes leave the fast-drying track merely damp, not soaked.
 function sampleRadarFrame(host, frame) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    const t = setTimeout(() => resolve(false), 8000);
+    const t = setTimeout(() => resolve(0), 8000);
     img.onload = () => {
       clearTimeout(t);
       try {
@@ -101,13 +104,21 @@ function sampleRadarFrame(host, frame) {
         ctx.drawImage(img, 0, 0);
         // ~±3.5 km box around the track (z7: 1 px ≈ 1.2 km)
         const px = ctx.getImageData(RADAR_TILE.px - 3, RADAR_TILE.py - 3, 6, 6).data;
-        for (let i = 3; i < px.length; i += 4) {
-          if (px[i] > 60) return resolve(true); // any radar echo over the track
+        let cls = 0;
+        for (let i = 0; i < px.length; i += 4) {
+          if (px[i + 3] <= 60) continue; // no echo at this pixel
+          const lum = 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2];
+          // Universal-blue scheme, sampled live: drizzle/light rain = cyans and
+          // mid-blues (lum ~80-160); heavy rain = dark navy/purple/deep red,
+          // all lum < 60. (Hue tests misfire on pale smoothing-edge artifacts.)
+          const heavy = lum < 60;
+          cls = Math.max(cls, heavy ? 2 : 1);
+          if (cls === 2) break;
         }
-        resolve(false);
-      } catch (e) { resolve(false); }
+        resolve(cls);
+      } catch (e) { resolve(0); }
     };
-    img.onerror = () => { clearTimeout(t); resolve(false); };
+    img.onerror = () => { clearTimeout(t); resolve(0); };
     img.src = `${host}${frame.path}/256/${RADAR_TILE.z}/${RADAR_TILE.x}/${RADAR_TILE.y}/2/1_1.png`;
   });
 }
@@ -118,10 +129,13 @@ async function radarRecentRain() {
     const frames = meta.radar?.past || [];
     if (!frames.length) return null;
     const hits = await Promise.all(frames.map((f) => sampleRadarFrame(meta.host, f)));
-    const rainyFrames = hits.filter(Boolean).length;
-    const lastIdx = hits.lastIndexOf(true);
+    const lightFrames = hits.filter((h) => h === 1).length;
+    const heavyFrames = hits.filter((h) => h === 2).length;
+    const lastIdx = hits.reduce((a, h, i) => (h > 0 ? i : a), -1);
     return {
-      rainyFrames,
+      lightFrames,
+      heavyFrames,
+      rainyFrames: lightFrames + heavyFrames,
       lastRainAgoMin: lastIdx >= 0 ? Math.max(0, Math.round((meta.generated - frames[lastIdx].time) / 60)) : null,
     };
   } catch (e) {
@@ -133,10 +147,12 @@ async function radarRecentRain() {
 function applyRadarCorrection(d, nowIdx, radar) {
   d._radarRain = radar && radar.rainyFrames ? radar : null;
   if (!d._radarRain) return;
-  // Water the radar saw (~0.6 mm per rainy 10-min frame), already partly dried
-  // depending on how long ago the last echo was
+  // Drizzle echoes barely wet the exposed, fast-drying track (~0.08 mm per
+  // 10-min frame → damp at most); heavy echoes count for real water. Radar
+  // alone caps at "Wet" — "Soaked" needs model-confirmed heavy rain.
   const recency = Math.max(0.3, 1 - (radar.lastRainAgoMin || 0) / 180);
-  let add = Math.min(3.5, 0.6 * radar.rainyFrames) * recency;
+  let add = Math.min(2.5, 0.08 * radar.lightFrames + 0.5 * radar.heavyFrames) * recency;
+  if (add < 0.15) return;
   const et0 = d.hourly.et0_fao_evapotranspiration;
   const wind = d.hourly.wind_speed_10m;
   for (let i = nowIdx; i < d._wetness.length && add > 0.05; i++) {
@@ -311,7 +327,8 @@ function renderSurface(d, nowIdx) {
       : 'Slippery — wet for a while';
   }
   if (d._radarRain && wet > 0.1) {
-    detail.textContent += ` · radar saw rain ${d._radarRain.lastRainAgoMin} min ago`;
+    const kind = d._radarRain.heavyFrames ? 'rain' : 'light rain';
+    detail.textContent += ` · radar saw ${kind} ${d._radarRain.lastRainAgoMin} min ago`;
   }
 }
 
