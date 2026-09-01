@@ -57,17 +57,25 @@ function wmoIcon(code, isDay) { return (WMO[code] || ['?', '❓', '❓'])[isDay 
 // evapotranspiration (sun + heat + wind + humidity), scaled up because hot
 // asphalt dries much faster than the reference grass surface.
 // Returns mm-equivalent wetness per hourly index (past 24h + full forecast).
+// Calibrated from rider experience at HHBL (2026-09-01): the exposed, windy
+// track dries fast — good to ride within ~3 h after rain — but damp patches
+// (shade, painted lines, low spots) linger a few hours longer.
 function computeSurfaceWetness(d) {
   const rain = d.hourly.precipitation;
   const et0 = d.hourly.et0_fao_evapotranspiration;
+  const wind = d.hourly.wind_speed_10m;
   const wet = new Array(rain.length);
-  let w = 0; // start 24h back at dry — anything older has evaporated in Bangkok heat
+  let w = 0; // main surface water (mm) — dries fast
+  let p = 0; // damp-patch water — small, dries slowly
   for (let i = 0; i < rain.length; i++) {
-    w += rain[i] || 0;
-    w = Math.min(w, 6); // asphalt sheds standing water; wetness saturates
-    const dry = 0.08 + 2.2 * (et0[i] || 0); // mm/h; ~0.15 at night, ~1+ in full sun
-    w = Math.max(0, w - dry);
-    wet[i] = w;
+    const r = rain[i] || 0;
+    w = Math.min(w + r, 6);        // asphalt sheds standing water; saturates
+    p = Math.min(p + r * 0.1, 0.6); // a slice of every rain feeds the slow spots
+    const evap = et0[i] || 0;
+    const breeze = wind[i] || 0;
+    w = Math.max(0, w - (0.3 + 4.0 * evap + breeze * 0.012)); // ~1.5-2 mm/h in daytime sun+wind
+    p = Math.max(0, p - (0.03 + 0.4 * evap + breeze * 0.003)); // patches take hours longer
+    wet[i] = w + p;
   }
   return wet;
 }
@@ -218,16 +226,23 @@ function renderSurface(d, nowIdx) {
   document.getElementById('stat-surface').textContent = level.label;
 
   const detail = document.getElementById('surface-detail');
+  const firstBelow = (threshold) => {
+    for (let i = nowIdx + 1; i < Math.min(nowIdx + 36, d._wetness.length); i++) {
+      if (d._wetness[i] <= threshold) return i;
+    }
+    return -1;
+  };
   if (wet <= 0.1) {
     detail.textContent = 'Track surface';
-  } else {
-    // Estimated time the tarmac dries out (first modelled-dry hour ahead)
-    let dryIdx = -1;
-    for (let i = nowIdx + 1; i < Math.min(nowIdx + 36, d._wetness.length); i++) {
-      if (d._wetness[i] <= 0.1) { dryIdx = i; break; }
-    }
+  } else if (wet <= 0.8) {
+    const dryIdx = firstBelow(0.1);
     detail.textContent = dryIdx > 0
-      ? `Slippery — dry ~${fmtHour(d.hourly.time[dryIdx])}`
+      ? `Patches drying — dry ~${fmtHour(d.hourly.time[dryIdx])}`
+      : 'Damp patches linger';
+  } else {
+    const ridableIdx = firstBelow(0.8);
+    detail.textContent = ridableIdx > 0
+      ? `Slippery — rideable ~${fmtHour(d.hourly.time[ridableIdx])}`
       : 'Slippery — wet for a while';
   }
 }
