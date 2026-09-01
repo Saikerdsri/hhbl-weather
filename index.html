@@ -84,6 +84,7 @@
           <div class="stat"><span class="stat-icon">💨</span><div><span class="stat-value" id="stat-wind"></span><span class="stat-name">Wind</span></div></div>
           <div class="stat"><span class="stat-icon">🌧️</span><div><span class="stat-value" id="stat-rain"></span><span class="stat-name">Rain now</span></div></div>
           <div class="stat"><span class="stat-icon">☀️</span><div><span class="stat-value" id="stat-uv"></span><span class="stat-name">UV index</span></div></div>
+          <div class="stat stat-surface"><span class="stat-icon" id="surface-icon">🛣️</span><div><span class="stat-value" id="stat-surface"></span><span class="stat-name" id="surface-detail">Track surface</span></div></div>
         </div>
       </div>
     </section>
@@ -164,7 +165,7 @@
 
     <footer class="footer">
       <p>Forecast data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · Location: Sky Lane, Suvarnabhumi Airport (13.69°N, 100.75°E)</p>
-      <p>Ride score weighs rain chance, rainfall, heat, wind, UV and track opening hours. Always check the sky before you roll out. 🚲</p>
+      <p>Ride score weighs rain chance, rainfall, heat, wind, UV, track opening hours and estimated tarmac wetness (modelled from recent rain and drying conditions — not a sensor; shaded sections and painted lines stay slick longer). Always check the sky before you roll out. 🚲</p>
       <div class="credit">
         <p class="credit-line">© <span id="credit-year">2026</span> <strong>Thamarat Saikerdsri</strong> · All rights reserved.</p>
         <p class="credit-terms">Free for everyone to use and share. Please keep this credit — do not claim this work as your own or sell it.</p>
@@ -197,7 +198,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="lane-data.js?v=2"></script>
 <script src="map.js?v=7"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 <script src="donate.js?v=1"></script>
 </body>
 </html>

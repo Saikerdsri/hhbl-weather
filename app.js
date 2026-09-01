@@ -14,9 +14,9 @@ const TRACK_CLOSE = 21; // 21:00 (last entry earlier, lights on the lit loop)
 const API_URL =
   `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
   `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,is_day` +
-  `&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,is_day` +
+  `&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,is_day,et0_fao_evapotranspiration` +
   `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max` +
-  `&timezone=${encodeURIComponent(TZ)}&forecast_days=7`;
+  `&timezone=${encodeURIComponent(TZ)}&forecast_days=7&past_days=1`;
 
 // WMO weather codes -> description + icons (day / night)
 const WMO = {
@@ -51,6 +51,38 @@ const WMO = {
 function wmoDesc(code) { return (WMO[code] || ['Unknown', '❓', '❓'])[0]; }
 function wmoIcon(code, isDay) { return (WMO[code] || ['?', '❓', '❓'])[isDay ? 1 : 2]; }
 
+// ---- Track surface wetness model ----
+// Simple water balance on the tarmac: each hour rain adds surface water (mm),
+// evaporation removes it. Drying power comes from Open-Meteo's FAO reference
+// evapotranspiration (sun + heat + wind + humidity), scaled up because hot
+// asphalt dries much faster than the reference grass surface.
+// Returns mm-equivalent wetness per hourly index (past 24h + full forecast).
+function computeSurfaceWetness(d) {
+  const rain = d.hourly.precipitation;
+  const et0 = d.hourly.et0_fao_evapotranspiration;
+  const wet = new Array(rain.length);
+  let w = 0; // start 24h back at dry — anything older has evaporated in Bangkok heat
+  for (let i = 0; i < rain.length; i++) {
+    w += rain[i] || 0;
+    w = Math.min(w, 6); // asphalt sheds standing water; wetness saturates
+    const dry = 0.08 + 2.2 * (et0[i] || 0); // mm/h; ~0.15 at night, ~1+ in full sun
+    w = Math.max(0, w - dry);
+    wet[i] = w;
+  }
+  return wet;
+}
+
+const SURFACE_LEVELS = [
+  { max: 0.1, label: 'Dry', icon: '🛣️', penalty: 0 },
+  { max: 0.8, label: 'Damp', icon: '🛣️', penalty: 8 },
+  { max: 3.0, label: 'Wet', icon: '⚠️', penalty: 25 },
+  { max: Infinity, label: 'Soaked', icon: '⚠️', penalty: 40 },
+];
+
+function surfaceLevel(wetness) {
+  return SURFACE_LEVELS.find((l) => wetness <= l.max);
+}
+
 // ---- Ride score: 0–100, higher = better riding conditions ----
 function rideScore(h) {
   let score = 100;
@@ -79,6 +111,11 @@ function rideScore(h) {
   // UV during the day
   if (h.uv >= 11) score -= 10;
   else if (h.uv >= 8) score -= 5;
+
+  // Wet tarmac is slippery even after the rain stops
+  score -= surfaceLevel(h.wetness || 0).penalty;
+  // Fresh rain on dry tarmac lifts the oil film — the most slippery moment
+  if (h.freshRain) score -= 12;
 
   // A very likely soaking can never rate better than "fair"
   if ((h.precipProb || 0) >= 70) score = Math.min(score, 50);
@@ -109,6 +146,10 @@ function reasonText(h) {
   if (h.code >= 95) reasons.push('thunderstorms around');
   else if (h.precipProb >= 60) reasons.push(`${h.precipProb}% chance of rain`);
   else if (h.precipProb >= 35) reasons.push(`${h.precipProb}% rain chance`);
+  if (h.freshRain) reasons.push('fresh rain on dry tarmac — extra slippery');
+  else if ((h.wetness || 0) > 3) reasons.push('tarmac soaked — very slippery');
+  else if ((h.wetness || 0) > 0.8) reasons.push('tarmac still wet from earlier rain');
+  else if ((h.wetness || 0) > 0.1) reasons.push('tarmac damp in places');
   if (h.feels >= 38) reasons.push(`feels like ${Math.round(h.feels)}°C`);
   if (h.gusts >= 45) reasons.push(`gusts to ${Math.round(h.gusts)} km/h`);
   else if (h.wind >= 30) reasons.push(`windy (${Math.round(h.wind)} km/h)`);
@@ -119,6 +160,8 @@ function reasonText(h) {
 }
 
 function hourData(d, i) {
+  const wetness = d._wetness ? d._wetness[i] : 0;
+  const prevWet = d._wetness && i > 0 ? d._wetness[i - 1] : 0;
   return {
     time: d.hourly.time[i],
     temp: d.hourly.temperature_2m[i],
@@ -130,6 +173,8 @@ function hourData(d, i) {
     gusts: d.hourly.wind_gusts_10m[i],
     uv: d.hourly.uv_index[i],
     isDay: d.hourly.is_day[i],
+    wetness,
+    freshRain: (d.hourly.precipitation[i] || 0) > 0.2 && prevWet < 0.1,
   };
 }
 
@@ -164,6 +209,27 @@ function renderCurrent(d) {
   document.getElementById('stat-wind').textContent = `${Math.round(c.wind_speed_10m)} km/h (gusts ${Math.round(c.wind_gusts_10m)})`;
   document.getElementById('stat-rain').textContent = c.rain > 0 ? `${c.rain.toFixed(1)} mm` : 'None';
   document.getElementById('stat-uv').textContent = c.uv_index != null ? c.uv_index.toFixed(1) : '–';
+}
+
+function renderSurface(d, nowIdx) {
+  const wet = d._wetness[nowIdx];
+  const level = surfaceLevel(wet);
+  document.getElementById('surface-icon').textContent = level.icon;
+  document.getElementById('stat-surface').textContent = level.label;
+
+  const detail = document.getElementById('surface-detail');
+  if (wet <= 0.1) {
+    detail.textContent = 'Track surface';
+  } else {
+    // Estimated time the tarmac dries out (first modelled-dry hour ahead)
+    let dryIdx = -1;
+    for (let i = nowIdx + 1; i < Math.min(nowIdx + 36, d._wetness.length); i++) {
+      if (d._wetness[i] <= 0.1) { dryIdx = i; break; }
+    }
+    detail.textContent = dryIdx > 0
+      ? `Slippery — dry ~${fmtHour(d.hourly.time[dryIdx])}`
+      : 'Slippery — wet for a while';
+  }
 }
 
 function renderVerdict(d, nowIdx) {
@@ -291,8 +357,11 @@ function renderRideWindows(d, nowIdx) {
 function renderDaily(d) {
   const container = document.getElementById('daily');
   container.innerHTML = '';
-  const todayIso = d.daily.time[0];
-  for (let i = 0; i < d.daily.time.length; i++) {
+  // With past_days=1 the first daily entry is yesterday — start from today
+  const now = bangkokNow();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const start = Math.max(0, d.daily.time.indexOf(todayIso));
+  for (let i = start; i < d.daily.time.length; i++) {
     const row = document.createElement('div');
     row.className = 'day-row';
     const code = d.daily.weather_code[i];
@@ -322,9 +391,12 @@ async function loadWeather() {
     const now = bangkokNow();
     const nowKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:00`;
     let nowIdx = data.hourly.time.indexOf(nowKey);
-    if (nowIdx < 0) nowIdx = 0;
+    if (nowIdx < 0) nowIdx = 24; // with past_days=1, "now" sits ~24h into the arrays
+
+    data._wetness = computeSurfaceWetness(data);
 
     renderCurrent(data);
+    renderSurface(data, nowIdx);
     renderVerdict(data, nowIdx);
     renderHourly(data, nowIdx);
     renderRideWindows(data, nowIdx);
