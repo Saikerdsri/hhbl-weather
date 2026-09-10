@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?v=13">
-<link rel="stylesheet" href="style-lux.css?v=6">
+<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style-lux.css?v=7">
 <script>window.APP_THEME = 'lux';</script>
 </head>
 <body>
@@ -166,6 +166,7 @@
     <footer class="footer">
       <p>Forecast data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · Location: Sky Lane, Suvarnabhumi Airport (13.69°N, 100.75°E)</p>
       <p>Ride score weighs rain chance, rainfall, heat, wind, UV, track opening hours and estimated tarmac wetness (modelled from recent rain and drying conditions — not a sensor; shaded sections and painted lines stay slick longer). Always check the sky before you roll out. 🚲</p>
+      <button id="install-btn" class="install-btn">📲 Install as an app — free, no app store</button>
       <div class="credit">
         <p class="credit-line">© <span id="credit-year">2026</span> <strong>Thamarat Saikerdsri</strong> · All rights reserved.</p>
         <p class="credit-terms">Free for everyone to use and share. Please keep this credit — do not claim this work as your own or sell it.</p>
@@ -173,6 +174,32 @@
       </div>
     </footer>
   </main>
+</div>
+
+<!-- Install guide modal -->
+<div id="install-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="install-title">
+  <div class="modal-box install-box">
+    <button class="modal-close" id="install-close" title="Close">✕</button>
+    <h3 id="install-title">Use it like an app</h3>
+    <p class="modal-sub">Add Sky Lane Weather to your home screen — it gets its own icon and opens full-screen, no app store needed.</p>
+    <div class="install-guide">
+      <h4>🍎 iPhone / iPad</h4>
+      <ol>
+        <li>Open this site in <strong>Safari</strong></li>
+        <li>Tap the <strong>Share</strong> button — the square with an arrow pointing up, at the bottom of the screen</li>
+        <li>Scroll down the list and tap <strong>Add to Home Screen</strong></li>
+        <li>Tap <strong>Add</strong> (top right) — the 🚴 icon appears on your home screen</li>
+      </ol>
+      <h4>🤖 Android</h4>
+      <ol>
+        <li>Open this site in <strong>Chrome</strong></li>
+        <li>If an <strong>Install app</strong> banner pops up, just tap it — done</li>
+        <li>Otherwise tap the <strong>⋮ menu</strong> (top right) and choose <strong>Add to Home screen</strong> / <strong>Install app</strong></li>
+        <li>Confirm — the 🚴 icon appears on your home screen</li>
+      </ol>
+    </div>
+    <p class="qr-hint">From the home screen it launches instantly, full-screen, like any other app.</p>
+  </div>
 </div>
 
 <!-- Donation modal -->
@@ -198,7 +225,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="lane-data.js?v=2"></script>
 <script src="map.js?v=7"></script>
-<script src="app.js?v=11"></script>
+<script src="app.js?v=12"></script>
 <script src="donate.js?v=1"></script>
 </body>
 </html>

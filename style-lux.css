@@ -242,6 +242,13 @@ h1 {
 /* ---- Loading ---- */
 .spinner { border-color: rgba(201, 169, 98, 0.2); border-top-color: var(--gold); }
 
+.install-btn {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+.install-btn:hover { background: rgba(201, 169, 98, 0.1); }
+.install-guide h4 { font-family: 'Playfair Display', Georgia, serif; color: var(--gold-bright); }
+
 /* ---- Donation modal ---- */
 .modal-box {
   background: rgba(22, 27, 36, 0.94);

@@ -451,6 +451,38 @@ h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
 #buddy-name { font-weight: 800; font-size: 1.05rem; margin-top: 8px; }
 #buddy-flavor { font-size: 0.78rem; color: var(--text-soft); margin-top: 2px; }
 
+/* Install guide */
+.install-btn {
+  display: inline-block;
+  margin: 14px 0 4px;
+  padding: 9px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.install-btn:hover { background: rgba(14, 125, 209, 0.1); }
+.install-box { text-align: left; }
+.install-box h3, .install-box .modal-sub, .install-box .qr-hint { text-align: center; }
+.install-guide h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 16px 0 8px;
+}
+.install-guide ol {
+  margin: 0 0 6px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.86rem;
+  color: var(--text-soft);
+}
+.install-guide li strong { color: var(--text); }
+
 /* Footer */
 .footer { color: var(--text-soft); font-size: 0.75rem; text-align: center; margin-top: 8px; }
 .footer a { color: var(--accent); }

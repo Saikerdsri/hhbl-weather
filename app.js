@@ -525,6 +525,29 @@ async function loadWeather() {
 // Credit footer: keep the year current
 document.getElementById('credit-year').textContent = bangkokNow().getFullYear();
 
+// "Install as an app" guide. On Android/Chrome the browser hands us a real
+// install prompt (beforeinstallprompt) — use it for one-tap install; everyone
+// else (iPhone Safari included) gets the step-by-step modal.
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+const installModal = document.getElementById('install-modal');
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (choice.outcome === 'accepted') return; // installed — no guide needed
+  }
+  installModal.classList.remove('hidden');
+});
+document.getElementById('install-close').addEventListener('click', () => installModal.classList.add('hidden'));
+installModal.addEventListener('click', (e) => { if (e.target === installModal) installModal.classList.add('hidden'); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') installModal.classList.add('hidden'); });
+
 // PWA: register the service worker (works on https and localhost)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW registration failed:', e));
