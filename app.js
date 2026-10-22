@@ -24,8 +24,9 @@ const WMO = {
   1:  ['Mainly clear', '🌤️', '🌙'],
   2:  ['Partly cloudy', '⛅', '☁️'],
   3:  ['Overcast', '☁️', '☁️'],
-  45: ['Fog', '🌫️', '🌫️'],
-  48: ['Depositing rime fog', '🌫️', '🌫️'],
+  // 🌫️ renders as a near-invisible gray block on Windows — use 🌁 for fog
+  45: ['Fog', '🌁', '🌁'],
+  48: ['Depositing rime fog', '🌁', '🌁'],
   51: ['Light drizzle', '🌦️', '🌧️'],
   53: ['Drizzle', '🌦️', '🌧️'],
   55: ['Dense drizzle', '🌧️', '🌧️'],
