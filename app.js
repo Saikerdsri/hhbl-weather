@@ -24,9 +24,10 @@ const WMO = {
   1:  ['Mainly clear', '🌤️', '🌙'],
   2:  ['Partly cloudy', '⛅', '☁️'],
   3:  ['Overcast', '☁️', '☁️'],
-  // 🌫️ renders as a near-invisible gray block on Windows — use 🌁 for fog
-  45: ['Fog', '🌁', '🌁'],
-  48: ['Depositing rime fog', '🌁', '🌁'],
+  // Fog emoji look wrong at small sizes (🌫️ = blank gray block on Windows,
+  // 🌁 = cluttered cityscape) — show a cloud, softened by the .icon-fog blur
+  45: ['Fog', '☁️', '☁️'],
+  48: ['Depositing rime fog', '☁️', '☁️'],
   51: ['Light drizzle', '🌦️', '🌧️'],
   53: ['Drizzle', '🌦️', '🌧️'],
   55: ['Dense drizzle', '🌧️', '🌧️'],
@@ -51,6 +52,7 @@ const WMO = {
 
 function wmoDesc(code) { return (WMO[code] || ['Unknown', '❓', '❓'])[0]; }
 function wmoIcon(code, isDay) { return (WMO[code] || ['?', '❓', '❓'])[isDay ? 1 : 2]; }
+function isFog(code) { return code === 45 || code === 48; }
 
 // ---- Track surface wetness model ----
 // Simple water balance on the tarmac: each hour rain adds surface water (mm),
@@ -292,6 +294,7 @@ function fmtDay(iso, todayIso) {
 function renderCurrent(d) {
   const c = d.current;
   document.getElementById('current-icon').textContent = wmoIcon(c.weather_code, c.is_day);
+  document.getElementById('current-icon').classList.toggle('icon-fog', isFog(c.weather_code));
   document.getElementById('current-temp').textContent = `${Math.round(c.temperature_2m)}°C`;
   document.getElementById('current-desc').textContent = wmoDesc(c.weather_code);
   document.getElementById('current-feels').textContent = `Feels like ${Math.round(c.apparent_temperature)}°C`;
@@ -380,7 +383,7 @@ function renderHourly(d, nowIdx) {
       : 'Track closed';
     cell.innerHTML = `
       <div class="hour-time">${i === nowIdx ? 'Now' : fmtHour(h.time)}</div>
-      <div class="hour-icon">${wmoIcon(h.code, h.isDay)}</div>
+      <div class="hour-icon${isFog(h.code) ? ' icon-fog' : ''}">${wmoIcon(h.code, h.isDay)}</div>
       <div class="hour-temp">${Math.round(h.temp)}°</div>
       <div class="hour-rain">${h.precipProb > 0 ? h.precipProb + '%' : '&nbsp;'}</div>`;
     container.appendChild(cell);
@@ -468,7 +471,7 @@ function renderDaily(d) {
     const code = d.daily.weather_code[i];
     row.innerHTML = `
       <span class="day-name">${fmtDay(d.daily.time[i], todayIso)}</span>
-      <span class="day-icon">${wmoIcon(code, 1)}</span>
+      <span class="day-icon${isFog(code) ? ' icon-fog' : ''}">${wmoIcon(code, 1)}</span>
       <span class="day-desc">${wmoDesc(code)}</span>
       <span class="day-rain">💧 ${d.daily.precipitation_probability_max[i] ?? 0}% · ${(d.daily.precipitation_sum[i] ?? 0).toFixed(1)} mm</span>
       <span class="day-temps">${Math.round(d.daily.temperature_2m_max[i])}° <span class="t-min">${Math.round(d.daily.temperature_2m_min[i])}°</span></span>`;

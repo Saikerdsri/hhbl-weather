@@ -331,6 +331,9 @@ h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
 }
 .cam-offline a { color: var(--accent); font-weight: 600; }
 
+/* Fog: a softly blurred cloud reads as haze, consistent on every platform */
+.icon-fog { filter: blur(1.2px) saturate(0.6); opacity: 0.85; }
+
 /* Hourly */
 .hourly-scroll {
   display: flex;
