@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style.css?v=15">
 <link rel="stylesheet" href="style-lux.css?v=7">
 <script>window.APP_THEME = 'lux';</script>
 </head>
@@ -134,13 +134,11 @@
     <section class="card">
       <h3 class="card-title">Live camera — Bike Center <span class="card-note">(official HHBL feed)</span></h3>
       <div class="cam-wrap">
-        <iframe
-          src="https://html.login.in.th/flashstreaming/flash_url/vip/hhbl/640/360/1.html"
-          title="HHBL Bike Center live camera"
-          loading="lazy"
-          allow="autoplay; fullscreen"
-          allowfullscreen
-          referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <video id="cam-video" muted playsinline controls preload="none" title="HHBL Bike Center live camera"></video>
+        <div id="cam-offline" class="cam-offline hidden">
+          <p>📷 The HHBL camera appears to be offline right now.</p>
+          <p><a href="https://www.hhblbikelane.com/bike-center-cam/" target="_blank" rel="noopener">Try their camera page directly ↗</a></p>
+        </div>
       </div>
       <p class="map-note">The best surface check there is: <strong>shiny or dark-patched tarmac on camera = still wet and slippery</strong>, whatever the forecast says. Stream by <a href="https://www.hhblbikelane.com/bike-center-cam/" target="_blank" rel="noopener">hhblbikelane.com</a> — more camera angles on their site.</p>
     </section>
@@ -223,9 +221,11 @@
   </div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
 <script src="lane-data.js?v=2"></script>
 <script src="map.js?v=7"></script>
 <script src="app.js?v=12"></script>
+<script src="cam.js?v=1"></script>
 <script src="donate.js?v=1"></script>
 </body>
 </html>
